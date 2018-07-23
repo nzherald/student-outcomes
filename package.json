@@ -1,18 +1,18 @@
 {
   "private": true,
-  "name": "template-batteries-included",
+  "name": "student-outcomes",
   "author": "",
   "license": "ISC",
-  "description": "Basic template for new story",
+  "description": "Swarm filter visualisation to accompany Kirsty's stories",
   "keywords": [],
   "version": "0.0.1",
-  "homepage": "https://insights.nzherald.co.nz/apps/2018/template-batteries-included/",
+  "homepage": "https://insights.nzherald.co.nz/apps/2018/student-outcomes/",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/nzherald/template.git"
+    "url": "git+https://github.com/nzherald/student-outcomes.git"
   },
   "bugs": {
-    "url": "https://github.com/nzherald/template/issues"
+    "url": "https://github.com/nzherald/student-outcomes/issues"
   },
   "scripts": {
     "start": "webpack-dev-server --config webpack.dev.js --open",
