@@ -12,8 +12,8 @@ class Beeswarm {
         this.$  = $(opt.container)
         this.d3 = d3.select(opt.container)
         this.svg = {
-            $: this.$.find("svg"),
-            d3: this.d3.select("svg")
+            d3: this.d3.selectAppend("svg"),
+            $: this.$.find("svg")
         }
         this.makeAxes(opt.axes)
         this.makeForce()
