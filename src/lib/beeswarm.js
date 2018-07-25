@@ -2,20 +2,25 @@ import _ from "lodash"
 import $ from "jquery"
 import * as d3 from "d3"
 import * as d3jetpack from "d3-jetpack"
-
 import "./beeswarm.less"
 
 
 class Beeswarm {
-    constructor (opt, b) {
-        console.log("Starting Beeswarm:", this)
+    constructor (opt) {
         this.$  = $(opt.container)
         this.d3 = d3.select(opt.container)
         this.svg = {
             d3: this.d3.selectAppend("svg"),
             $: this.$.find("svg")
         }
-        this.makeAxes(opt.axes)
+        this.d3.classed("beeswarm", true)
+
+        this.scale  = opt.scale || {}
+        this.domain = opt.domain || {}
+        this.axis   = opt.axis || {}
+        this.format = opt.format || {}
+
+        this.makeAxes()
         this.makeForce(_.extend({
             chargeStr: -0.2,
             collideStr: 0.6,
@@ -26,8 +31,7 @@ class Beeswarm {
 
     setData (data) {
         this.data = data
-        this.setVals()
-        this.setDomains(data)
+        this.setDomains()
         this.makeNodes(data)
         this.redraw()
     }
@@ -47,35 +51,28 @@ class Beeswarm {
     //============//
     //   Values   //
     //============//
-    // IMPORTANT: Set x/y/y/cVals here
-    setVals () {
-        console.error("The placeholder .setVal() function doesn't do anything!")
-        // // Example
-        // _.each(this.data, d => {
-        //     const data = d.data[this.year] || {}
-        //     d.xVal = (_.find(data.rows, this.filter) || {})[this.measure]
-        //     d.yVal = data[this.yKey]
-        //     d.cVal = data[this.cKey]
-        //     d.rVal = data[this.rKey]
-        // })
-    }
-
-    get (d, k) {
+    getVal (d, k) {
         return (k === "x") ? this.getXVal(d) :
                (k === "y") ? this.getYVal(d) :
                (k === "r") ? this.getRVal(d) :
                (k === "c") ? this.getCVal(d) :
                              null
     }
-
-    getXVal (d) { return d.xVal }
-    getYVal (d) { return d.yVal }
-    getRVal (d) { return d.rVal }
-    getCVal (d) { return d.cVal }
+    getPrintVal (p, k) {
+        let format = this.format[k],
+            val = this.getVal(p, k)
+        return (format) ? format(val) : val
+    }
     getX (d) { return this.scale.x(this.getXVal(d)) || 0 }
     getY (d) { return this.scale.y(this.getYVal(d)) || 0 }
     getR (d) { return this.scale.r(this.getRVal(d)) || 0 }
     getC (d) { return this.scale.c(this.getCVal(d)) }
+
+    // Customise these
+    getXVal (d) { return d.xVal }
+    getYVal (d) { return d.yVal }
+    getRVal (d) { return d.rVal }
+    getCVal (d) { return d.cVal }
 
 
     //===========//
@@ -132,19 +129,17 @@ class Beeswarm {
     //==========//
     //   Axes   //
     //==========//
-    makeAxes (opt) {
-        this.scale  = opt.scale
-        this.domain = opt.domain
-        this.axis   = opt.axis
+    makeAxes () {
         _.each(this.axis, (axis, k) => {
             axis.scale(this.scale[k])
+            if (this.format[k]) axis.tickFormat(this.format[k])
         })
     }
 
     setDomains () {
         _.each(this.domain, (domain, k) => {
             let scale = this.scale[k],
-                vals = _.map(this.data, d => this.get(d, k))
+                vals = _.map(this.data, d => this.getVal(d, k))
             if (domain === "max") {
                 domain = [0, _.max(vals)]
             }
