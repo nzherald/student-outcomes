@@ -3,79 +3,38 @@ import $ from "jquery"
 import * as d3 from "d3"
 import * as d3jetpack from "d3-jetpack"
 
+import SVGBeeswarm from "./beeswarm.js"
 import "./beeswarm.less"
 
 
-class Beeswarm {
+class Beeswarm extends SVGBeeswarm {
     constructor (opt, b) {
-        console.log("Starting Beeswarm:", this)
-        this.$  = $(opt.container)
-        this.d3 = d3.select(opt.container)
-        this.svg = {
-            d3: this.d3.selectAppend("svg"),
-            $: this.$.find("svg")
+        super(opt)
+        opt.canvas = true
+        this.canvas = {
+            d3: this.d3.selectAppend("canvas"),
+            $: this.$.find("canvas")
         }
-        this.makeAxes(opt.axes)
-        this.makeForce()
-
-        $(window).on("resize", () => this.redraw())
+        this.svg = this.canvas
     }
-    setData (data) {
-        this.data = data
-        this.makeNodes(data)
-        this.redraw()
-    }
-    redraw () {
-        this.onRedraw()
-        this.setDomains()
-        this.setAxes()
-        this.setNodes()
-        this.sim.alpha(1)
-        this.sim.restart()
-    }
-    onRedraw () {} // Placeholder for custom pre-redraw event
-
-    //============//
-    //   Values   //
-    //============//
-    getX (d) {
-        const data = d.data[this.year] || {},
-              out  = _.find(data.rows, this.filter) || {},
-              val  = out[this.measure]
-        return val
-    }
-    get (d, k) {
-        const data = d.data[this.year] || {}
-        return data[k]
-    }
-    getY (d) { return this.get(d, this.yKey) }
-    getR (d) { return this.get(d, this.rKey) }
-    getC (d) { return this.get(d, this.cKey) }
 
 
     //===========//
     //   Force   //
     //===========//
     onTick () {
-        this.nodes.at("cx", d => d.x)
-                  .at("cy", d => d.y)
-    }
-    toAnchor (alpha, clusterStr) {
-        const delta = alpha * clusterStr
+        const width  = this.canvas.$.width(),
+              height = this.canvas.$.height(),
+              context = this.canvas.d3.node().getContext("2d")
+        context.clearRect(0, 0, width, height)
         _.each(this.data, d => {
-            d.vx += (d.tx - d.x) * delta
-            d.vy += (d.ty - d.y) * delta
+            if (!d.tx || !d.ty) return // Don't draw invalid nodes
+            context.beginPath()
+            context.fillStyle = this.scale.c(this.getC(d))
+            context.moveTo(d.x, d.y)
+            context.arc(d.x, d.y, d.r, 0, 2 * Math.PI)
+            context.fill()
         })
-    }
-    makeForce () {
-        const CHARGE_STR  = -0.2,
-              COLLIDE_STR = 0.6,
-              CLUSTER_STR = 0.07
-        this.sim = d3.forceSimulation().stop()
-        this.sim.force("charge",  d3.forceManyBody().strength(CHARGE_STR))
-                .force("collide", d3.forceCollide().strength(COLLIDE_STR))
-                .force("anchor",  alpha => this.toAnchor(alpha, CLUSTER_STR))
-                .on("tick", () => this.onTick())
     }
 
 
@@ -88,9 +47,6 @@ class Beeswarm {
             d.x = this.$.width() * Math.random()
             d.y = this.$.height() * Math.random()
         })
-        this.nodes = this.d3.select(".nodes")
-                            .appendMany("g", data)
-                            .append("circle")
     }
     setNodes () {
         _.each(this.data, d => {
@@ -98,8 +54,6 @@ class Beeswarm {
             d.tx = this.scale.x(this.getX(d)) || 0
             d.ty = this.scale.y(this.getY(d)) || 0
         })
-        this.nodes.at("r", d => (!d.tx || !d.ty) ? 0 : d.r) // Hide invalid nodes
-        this.nodes.st("fill", d => this.scale.c(this.getC(d)))
         this.sim.force("collide").radius(d => d.r + 0.5)
     }
 
@@ -107,35 +61,21 @@ class Beeswarm {
     //==========//
     //   Axes   //
     //==========//
-    makeAxes (opt) {
-        this.scale = opt.scale
-        this.axis  = opt.axis
-        _.each(this.axis, (axis, k) => {
-            axis.scale(this.scale[k])
-        })
-    }
     setAxes () {
         const width  = this.svg.$.width(),
               height = this.svg.$.height()
+        // Canvas needs width/height attributes to scale properly
+        if (this.canvas) {
+            this.canvas.d3.at("width", width)
+                          .at("height", height)
+        }
         this.scale.x.range([0, width])
         this.scale.y.range([height, 0])
-        this.d3.select(".xAxis").call(this.axis.x)
-        this.d3.select(".yAxis").call(this.axis.y)
-        this.d3.selectAll(".yAxis .tick text").at("x", "0")
-        this.d3.selectAll(".yAxis .tick line").at("x1", "0")
-                                              .at("x2", "100%")
-    }
-    setDomains () {
-        const rVals = _.map(this.data, d => this.getR(d))
-        this.scale.r.domain([0, _.max(rVals)])
-
-        // Use provided domain or extract unique values from data
-        if (this.yDomain) this.scale.y.domain(this.yDomain)
-        else {
-            const yVals = _.map(this.data, d => this.getY(d)),
-                  domain = _(yVals).uniq().filter().sort().value()
-            this.scale.y.domain(domain)
-        }
+        // this.d3.select(".xAxis").call(this.axis.x)
+        // this.d3.select(".yAxis").call(this.axis.y)
+        // this.d3.selectAll(".yAxis .tick text").at("x", "0")
+        // this.d3.selectAll(".yAxis .tick line").at("x1", "0")
+        //                                       .at("x2", "100%")
     }
 }
 
