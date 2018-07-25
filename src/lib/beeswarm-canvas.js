@@ -38,29 +38,29 @@ class Beeswarm {
     //============//
     //   Values   //
     //============//
-    _getX (d) {
+    getX (d) {
         const data = d.data[this.year] || {},
               out  = _.find(data.rows, this.filter) || {},
               val  = out[this.measure]
         return val
     }
-    _get (d, k) {
+    get (d, k) {
         const data = d.data[this.year] || {}
         return data[k]
     }
-    _getY (d) { return this._get(d, this.yKey) }
-    _getR (d) { return this._get(d, this.rKey) }
-    _getC (d) { return this._get(d, this.cKey) }
+    getY (d) { return this.get(d, this.yKey) }
+    getR (d) { return this.get(d, this.rKey) }
+    getC (d) { return this.get(d, this.cKey) }
 
 
     //===========//
     //   Force   //
     //===========//
-    _onTick () {
+    onTick () {
         this.nodes.at("cx", d => d.x)
                   .at("cy", d => d.y)
     }
-    _toAnchor (alpha, clusterStr) {
+    toAnchor (alpha, clusterStr) {
         const delta = alpha * clusterStr
         _.each(this.data, d => {
             d.vx += (d.tx - d.x) * delta
@@ -74,8 +74,8 @@ class Beeswarm {
         this.sim = d3.forceSimulation().stop()
         this.sim.force("charge",  d3.forceManyBody().strength(CHARGE_STR))
                 .force("collide", d3.forceCollide().strength(COLLIDE_STR))
-                .force("anchor",  alpha => this._toAnchor(alpha, CLUSTER_STR))
-                .on("tick", () => this._onTick())
+                .force("anchor",  alpha => this.toAnchor(alpha, CLUSTER_STR))
+                .on("tick", () => this.onTick())
     }
 
 
@@ -94,12 +94,12 @@ class Beeswarm {
     }
     setNodes () {
         _.each(this.data, d => {
-            d.r  = this.scale.r(this._getR(d)) || 0
-            d.tx = this.scale.x(this._getX(d)) || 0
-            d.ty = this.scale.y(this._getY(d)) || 0
+            d.r  = this.scale.r(this.getR(d)) || 0
+            d.tx = this.scale.x(this.getX(d)) || 0
+            d.ty = this.scale.y(this.getY(d)) || 0
         })
         this.nodes.at("r", d => (!d.tx || !d.ty) ? 0 : d.r) // Hide invalid nodes
-        this.nodes.st("fill", d => this.scale.c(this._getC(d)))
+        this.nodes.st("fill", d => this.scale.c(this.getC(d)))
         this.sim.force("collide").radius(d => d.r + 0.5)
     }
 
@@ -126,13 +126,13 @@ class Beeswarm {
                                               .at("x2", "100%")
     }
     setDomains () {
-        const rVals = _.map(this.data, d => this._getR(d))
+        const rVals = _.map(this.data, d => this.getR(d))
         this.scale.r.domain([0, _.max(rVals)])
 
         // Use provided domain or extract unique values from data
         if (this.yDomain) this.scale.y.domain(this.yDomain)
         else {
-            const yVals = _.map(this.data, d => this._getY(d)),
+            const yVals = _.map(this.data, d => this.getY(d)),
                   domain = _(yVals).uniq().filter().sort().value()
             this.scale.y.domain(domain)
         }
