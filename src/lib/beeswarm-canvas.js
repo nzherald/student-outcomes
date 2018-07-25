@@ -10,7 +10,6 @@ import "./beeswarm.less"
 class Beeswarm extends SVGBeeswarm {
     constructor (opt, b) {
         super(opt)
-        opt.canvas = true
         this.canvas = {
             d3: this.d3.selectAppend("canvas"),
             $: this.$.find("canvas")
