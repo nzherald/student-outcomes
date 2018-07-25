@@ -16,41 +16,66 @@ class Beeswarm {
             $: this.$.find("svg")
         }
         this.makeAxes(opt.axes)
-        this.makeForce()
-
+        this.makeForce(_.extend({
+            chargeStr: -0.2,
+            collideStr: 0.6,
+            clusterStr: 0.07
+        }, opt))
         $(window).on("resize", () => this.redraw())
     }
+
     setData (data) {
         this.data = data
+        this.setVals()
+        this.setDomains(data)
         this.makeNodes(data)
         this.redraw()
     }
+
     redraw () {
         this.onRedraw()
-        this.setDomains()
+        this.setRanges()
         this.setAxes()
         this.setNodes()
         this.sim.alpha(1)
         this.sim.restart()
     }
+
     onRedraw () {} // Placeholder for custom pre-redraw event
+
 
     //============//
     //   Values   //
     //============//
-    getX (d) {
-        const data = d.data[this.year] || {},
-              out  = _.find(data.rows, this.filter) || {},
-              val  = out[this.measure]
-        return val
+    // IMPORTANT: Set x/y/y/cVals here
+    setVals () {
+        console.error("The placeholder .setVal() function doesn't do anything!")
+        // // Example
+        // _.each(this.data, d => {
+        //     const data = d.data[this.year] || {}
+        //     d.xVal = (_.find(data.rows, this.filter) || {})[this.measure]
+        //     d.yVal = data[this.yKey]
+        //     d.cVal = data[this.cKey]
+        //     d.rVal = data[this.rKey]
+        // })
     }
+
     get (d, k) {
-        const data = d.data[this.year] || {}
-        return data[k]
+        return (k === "x") ? this.getXVal(d) :
+               (k === "y") ? this.getYVal(d) :
+               (k === "r") ? this.getRVal(d) :
+               (k === "c") ? this.getCVal(d) :
+                             null
     }
-    getY (d) { return this.get(d, this.yKey) }
-    getR (d) { return this.get(d, this.rKey) }
-    getC (d) { return this.get(d, this.cKey) }
+
+    getXVal (d) { return d.xVal }
+    getYVal (d) { return d.yVal }
+    getRVal (d) { return d.rVal }
+    getCVal (d) { return d.cVal }
+    getX (d) { return this.scale.x(this.getXVal(d)) || 0 }
+    getY (d) { return this.scale.y(this.getYVal(d)) || 0 }
+    getR (d) { return this.scale.r(this.getRVal(d)) || 0 }
+    getC (d) { return this.scale.c(this.getCVal(d)) }
 
 
     //===========//
@@ -60,6 +85,7 @@ class Beeswarm {
         this.nodes.at("cx", d => d.x)
                   .at("cy", d => d.y)
     }
+
     toAnchor (alpha, clusterStr) {
         const delta = alpha * clusterStr
         _.each(this.data, d => {
@@ -67,14 +93,12 @@ class Beeswarm {
             d.vy += (d.ty - d.y) * delta
         })
     }
-    makeForce () {
-        const CHARGE_STR  = -0.2,
-              COLLIDE_STR = 0.6,
-              CLUSTER_STR = 0.07
+
+    makeForce (opt) {
         this.sim = d3.forceSimulation().stop()
-        this.sim.force("charge",  d3.forceManyBody().strength(CHARGE_STR))
-                .force("collide", d3.forceCollide().strength(COLLIDE_STR))
-                .force("anchor",  alpha => this.toAnchor(alpha, CLUSTER_STR))
+        this.sim.force("charge",  d3.forceManyBody().strength(opt.chargeStr))
+                .force("collide", d3.forceCollide().strength(opt.collideStr))
+                .force("anchor",  alpha => this.toAnchor(alpha, opt.clusterStr))
                 .on("tick", () => this.onTick())
     }
 
@@ -92,14 +116,15 @@ class Beeswarm {
                             .appendMany("g", data)
                             .append("circle")
     }
+
     setNodes () {
         _.each(this.data, d => {
-            d.r  = this.scale.r(this.getR(d)) || 0
-            d.tx = this.scale.x(this.getX(d)) || 0
-            d.ty = this.scale.y(this.getY(d)) || 0
+            d.r  = this.getR(d)
+            d.tx = this.getX(d)
+            d.ty = this.getY(d)
         })
         this.nodes.at("r", d => (!d.tx || !d.ty) ? 0 : d.r) // Hide invalid nodes
-        this.nodes.st("fill", d => this.scale.c(this.getC(d)))
+        this.nodes.st("fill", d => this.getC(d))
         this.sim.force("collide").radius(d => d.r + 0.5)
     }
 
@@ -108,34 +133,53 @@ class Beeswarm {
     //   Axes   //
     //==========//
     makeAxes (opt) {
-        this.scale = opt.scale
-        this.axis  = opt.axis
+        this.scale  = opt.scale
+        this.domain = opt.domain
+        this.axis   = opt.axis
         _.each(this.axis, (axis, k) => {
             axis.scale(this.scale[k])
         })
     }
-    setAxes () {
+
+    setDomains () {
+        _.each(this.domain, (domain, k) => {
+            let scale = this.scale[k],
+                vals = _.map(this.data, d => this.get(d, k))
+            if (domain === "max") {
+                domain = [0, _.max(vals)]
+            }
+            else if (domain === "extent") {
+                domain = d3.extent(vals)
+            }
+            else if (domain === "vals") {
+                domain = _(vals).uniq().filter().sort().value()
+            }
+            else if (domain instanceof Function) {
+                domain = domain(this.data)
+            }
+            // An array must be provided or produced
+            if (domain instanceof Array) {
+                scale.domain(domain)
+                if (scale.nice) scale.nice()
+            }
+        })
+    }
+
+    setRanges () {
         const width  = this.svg.$.width(),
               height = this.svg.$.height()
         this.scale.x.range([0, width])
         this.scale.y.range([height, 0])
-        this.d3.select(".xAxis").call(this.axis.x)
-        this.d3.select(".yAxis").call(this.axis.y)
+    }
+
+    setAxes () {
+        if (this.axis.x) this.svg.d3.selectAppend("g.xAxis.axis")
+                                    .call(this.axis.x)
+        if (this.axis.y) this.svg.d3.selectAppend("g.yAxis.axis")
+                                    .call(this.axis.y)
         this.d3.selectAll(".yAxis .tick text").at("x", "0")
         this.d3.selectAll(".yAxis .tick line").at("x1", "0")
                                               .at("x2", "100%")
-    }
-    setDomains () {
-        const rVals = _.map(this.data, d => this.getR(d))
-        this.scale.r.domain([0, _.max(rVals)])
-
-        // Use provided domain or extract unique values from data
-        if (this.yDomain) this.scale.y.domain(this.yDomain)
-        else {
-            const yVals = _.map(this.data, d => this.getY(d)),
-                  domain = _(yVals).uniq().filter().sort().value()
-            this.scale.y.domain(domain)
-        }
     }
 }
 

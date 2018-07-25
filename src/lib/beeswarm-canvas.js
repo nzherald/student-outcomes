@@ -30,7 +30,7 @@ class Beeswarm extends SVGBeeswarm {
         _.each(this.data, d => {
             if (!d.tx || !d.ty) return // Don't draw invalid nodes
             context.beginPath()
-            context.fillStyle = this.scale.c(this.getC(d))
+            context.fillStyle = this.getC(d)
             context.moveTo(d.x, d.y)
             context.arc(d.x, d.y, d.r, 0, 2 * Math.PI)
             context.fill()
@@ -50,9 +50,9 @@ class Beeswarm extends SVGBeeswarm {
     }
     setNodes () {
         _.each(this.data, d => {
-            d.r  = this.scale.r(this.getR(d)) || 0
-            d.tx = this.scale.x(this.getX(d)) || 0
-            d.ty = this.scale.y(this.getY(d)) || 0
+            d.r  = this.getR(d)
+            d.tx = this.getX(d)
+            d.ty = this.getY(d)
         })
         this.sim.force("collide").radius(d => d.r + 0.5)
     }
