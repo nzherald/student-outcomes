@@ -1,18 +1,31 @@
+@white: #FFFFFF;
 @whiteish: #F3F1F2;
+
 @lightdark: #C8CCCF;
 @darkish: #666;
-@dark: #4c585d;
+@dark: #4F4F4F;
+
 
 /* Project-specific styles go here */
 #root {
-    width: 800px;
-    height: 400px;
-    svg {
-        height: 300px;
-        padding: 4em;
-    }
-}
+    .beeswarm {
+        display: flex;
+        flex-direction: column;
+        box-sizing: border-box;
+        padding-top: 1em;
 
-@media (max-width: 800px) {
-    #root {}
+        .title {
+            text-align: center;
+            font-size: 0.8em;
+            margin-bottom: 0.6em;
+            .top {
+                margin-bottom: 0;
+            }
+        }
+        canvas {
+            flex-grow: 1;
+            width: 100%;
+            height: 400px;
+        }
+    }
 }
