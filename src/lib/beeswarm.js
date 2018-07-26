@@ -104,10 +104,12 @@ class Beeswarm {
     //   Nodes   //
     //===========//
     makeNodes (data) {
+        const width = this.svg.$.width(),
+              height = this.svg.$.height()
         this.sim.nodes(data)
         _.each(data, d => {
-            d.x = this.$.width() * Math.random()
-            d.y = this.$.height() * Math.random()
+            d.x = width * Math.random()
+            d.y = height * Math.random()
         })
         this.nodes = this.d3.select(".nodes")
                             .appendMany("g", data)

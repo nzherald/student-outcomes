@@ -41,10 +41,12 @@ class Beeswarm extends SVGBeeswarm {
     //   Nodes   //
     //===========//
     makeNodes (data) {
+        const width = this.canvas.$.width(),
+              height = this.canvas.$.height()
         this.sim.nodes(data)
         _.each(data, d => {
-            d.x = this.$.width() * Math.random()
-            d.y = this.$.height() * Math.random()
+            d.x = width * Math.random()
+            d.y = height * Math.random()
         })
     }
     setNodes () {
@@ -61,8 +63,8 @@ class Beeswarm extends SVGBeeswarm {
     //   Axes   //
     //==========//
     setAxes () {
-        const width  = this.svg.$.width(),
-              height = this.svg.$.height()
+        const width  = this.canvas.$.width(),
+              height = this.canvas.$.height()
         // Canvas needs width/height attributes to scale properly
         if (this.canvas) {
             this.canvas.d3.at("width", width)
