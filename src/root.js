@@ -154,7 +154,6 @@ class Main {
               context = canvas.getContext("2d")
         context.clearRect(0, 0, width, height)
         _.each(nodes, d => {
-            context.moveTo(d.x, d.y)
             context.beginPath()
             context.strokeStyle = "black"
             context.arc(d.x, d.y, d.r, 0 * Math.PI, 2 * Math.PI)

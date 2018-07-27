@@ -32,7 +32,6 @@ class Beeswarm extends SVGBeeswarm {
             if (!d.tx || !d.ty) return // Don't draw invalid nodes
             context.beginPath()
             context.fillStyle = this.getC(d)
-            context.moveTo(d.x, d.y)
             context.arc(d.x, d.y, d.r, 0, 2 * Math.PI)
             context.fill()
         })
