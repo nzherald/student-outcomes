@@ -146,6 +146,22 @@ class Main {
         })
         this.forceClusters(POS, () => {
             onTick()
+            this.drawClusterLabels(POS)
+        })
+    }
+
+    drawClusterLabels (nodes) {
+        const canvas = d3.select("canvas.labels").node(),
+              width  = $(canvas).width(),
+              height = $(canvas).height(),
+              context = canvas.getContext("2d")
+        context.clearRect(0, 0, width, height)
+        _.each(nodes, d => {
+            context.moveTo(d.x, d.y)
+            context.beginPath()
+            context.strokeStyle = "black"
+            context.arc(d.x, d.y, d.r, 0 * Math.PI, 2 * Math.PI)
+            context.stroke()
         })
     }
 

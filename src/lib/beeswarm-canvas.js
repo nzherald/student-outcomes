@@ -10,9 +10,11 @@ import "./beeswarm.less"
 class Beeswarm extends SVGBeeswarm {
     constructor (opt, b) {
         super(opt)
+        this.svg.$.remove()
         this.canvas = {
-            d3: this.d3.selectAppend("canvas"),
-            $: this.$.find("canvas")
+            d3: this.d3.select(".canvas-container")
+                       .selectAppend("canvas.main"),
+            $: this.$.find("canvas.main")
         }
         this.svg = this.canvas
     }
@@ -66,10 +68,9 @@ class Beeswarm extends SVGBeeswarm {
         const width  = this.canvas.$.width(),
               height = this.canvas.$.height()
         // Canvas needs width/height attributes to scale properly
-        if (this.canvas) {
-            this.canvas.d3.at("width", width)
-                          .at("height", height)
-        }
+        this.d3.selectAll("canvas")
+               .at("width", width)
+               .at("height", height)
         this.scale.x.range([0, width])
         this.scale.y.range([height, 0])
         // this.d3.select(".xAxis").call(this.axis.x)
