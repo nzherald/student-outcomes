@@ -168,7 +168,7 @@ class Main {
     // Place nodes using d3-force
     forceClusters (nodes, onTick) {
         let opt = {
-            chargeStr: -10,
+            chargeStr: -80,
             collideStr: 0.8
         }
         var width = $("canvas").width(),
@@ -180,7 +180,7 @@ class Main {
           .nodes(nodes)
           .on("tick", () => {
               _.each(nodes, d => {
-                  let padding = d.r * 1.2
+                  let padding = d.r + 40
                   d.x = _.clamp(d.x, padding, width - padding)
                   d.y = _.clamp(d.y, padding, height - padding)
               })
