@@ -124,29 +124,26 @@ class Main {
     // Anchor to centre
     toCentre (nodes) {
         let centre = {
-                x: $("canvas").width() / 2,
-                y: $("canvas").height() / 2
-            }
+            x: $("canvas").width() / 2,
+            y: $("canvas").height() / 2
+        }
         _.each(nodes, d => d.anchor = centre)
     }
 
     // Anchor to clusters
     toClusters (nodes, onTick) {
-        const POS = _(nodes).groupBy("outcome")
-                            .map((rows, outcome) => {
-                                return {
-                                    outcome,
-                                    count: rows.length,
-                                    r: rows.length * 0.2
-                                }
-                           }).value()
+        const clusters = _(nodes).groupBy("outcome").map((rows, outcome) => {
+            let count = rows.length,
+                r =  Math.sqrt(count * 50 / Math.PI)
+            return {outcome, count, r}
+        }).value()
         _(nodes).groupBy("outcome").each((rows, outcome) => {
-            let pos = _.find(POS, {outcome})
-            _.each(rows, d => d.anchor = pos)
+            let anchor = _.find(clusters, {outcome})
+            _.each(rows, d => d.anchor = anchor)
         })
-        this.forceClusters(POS, () => {
+        this.forceClusters(clusters, () => {
             onTick()
-            this.drawClusterLabels(POS)
+            this.drawClusterLabels(clusters)
         })
     }
 
