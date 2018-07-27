@@ -15,8 +15,10 @@ class Main {
     constructor () {
         // Clean data
         console.log("Raw data:", rawData)
-        const nodes = this.cleanData(rawData)
-        console.log("Cleaned data:", nodes)
+        const data = this.cleanData(rawData)
+        const nodes = this.makeNodes(data)
+        console.log("Cleaned data:", data)
+        console.log("Simulated nodes:", nodes)
 
         // Set up visualisation
         $("#root").addClass("nzherald").append(HTML)
@@ -41,49 +43,38 @@ class Main {
         // Set controllers
         $("#centre").on("click", () => {
             this.toCentre(nodes)
-            B.setNodes()
-            B.sim.alpha(1)
-            B.sim.restart()
+            B.redraw()
         })
         $("#cluster").on("click", () => {
             this.toClusters(nodes, () => B.setNodes())
-            B.sim.alpha(1)
-            B.sim.restart()
+            B.redraw()
         })
         $("#ethnicity").on("click", () => {
-            const colours = {
+            this.setColour(data, nodes, "Ethnicity", {
                 "Māori": "#D62728",
-                "European\\Pākehā": "#1F77B4",
                 "Pacific": "#8C564B",
+                "European\\Pākehā": "#1F77B4",
                 "Asian": "#FF7F0E",
                 "MELAA": "#2CA02C",
                 "Other": "#7F7F7F"
-            }
-            _(nodes).groupBy("ethnicity").each((v, k) => {
-                let c = colours[k]
-                _.each(v, d => d.cVal = c)
             })
-            B.setNodes()
+            B.onTick()
         })
         $("#deciles").on("click", () => {
-            const colours = {
-                "Decile 1": "#fc8d59",
-                "Decile 2": "#fc8d59",
-                "Decile 3": "#fc8d59",
-                "Decile 4": "#ffffbf",
-                "Decile 5": "#ffffbf",
-                "Decile 6": "#ffffbf",
-                "Decile 7": "#ffffbf",
-                "Decile 8": "#91bfdb",
-                "Decile 9": "##91bfdb",
+            this.setColour(data, nodes, "Decile", {
                 "Decile 10": "#91bfdb",
+                "Decile 9": "#91bfdb",
+                "Decile 8": "#91bfdb",
+                "Decile 7": "#ffffbf",
+                "Decile 6": "#ffffbf",
+                "Decile 5": "#ffffbf",
+                "Decile 4": "#ffffbf",
+                "Decile 3": "#fc8d59",
+                "Decile 2": "#fc8d59",
+                "Decile 1": "#fc8d59",
                 "Not Applicable": "#bfbfbf"
-            }
-            _(nodes).groupBy("decile").each((v, k) => {
-                let c = colours[k]
-                _.each(v, d => d.cVal = c)
             })
-            B.setNodes()
+            B.onTick()
         })
 
         // Initialise
@@ -93,32 +84,39 @@ class Main {
         $("#loading").fadeTo(600, 0.01, () => $("#loading").remove())
     }
 
-    // Generate simulated students
     cleanData (rawData) {
-        let out = []
         _.each(rawData, d => d.val = _.round(d.val / 50))
-        _(rawData)
-            .filter({year: "2015"})
-            .groupBy("outcome").each((r, outcome) => {
-                // Set up cohort
-                let total = _.find(r, {type: "Total"})             // Each outcome should have one total
-                let cohort = Array(total.val)                      // Generate empty array for cohort
-                cohort = _.map(cohort, d => { return {outcome} })  // Fill with outcome placeholders
-                out = out.concat(cohort)                           // Push cohort
+        return _(rawData).filter({year: "2015"})
+                         .groupBy("outcome")
+                         .value()
+    }
 
-                // Set demographics of cohort
-                _(r).reject({type: "Total"})
-                    .groupBy("type").each((s, type) => {
-                        let pool = cohort.slice(),                 // Reset pool
-                            k = type.toLowerCase()
-                        _.each(s, d => {                           // Iterate through rows
-                            let sample = _.sampleSize(pool, d.val) // Grab a random sample
-                            _.each(sample, e => e[k] = d.subgroup) // Tag sample with subgroup
-                            pool = _.difference(pool, sample)      // Remove sample from pool
-                        })
-                    })
+    // Generate simulated students
+    makeNodes (data) {
+        let nodes = []
+        _(data).each((r, outcome) => {
+            let total = _.find(r, {type: "Total"})             // Each outcome should have one total
+            let cohort = Array(total.val)                      // Generate empty array for cohort
+            cohort = _.map(cohort, d => { return {outcome} })  // Fill with outcome placeholders
+            nodes = nodes.concat(cohort)                       // Push cohort
+        })
+        return nodes
+    }
+
+    // Fancy algorithm for setting node colours
+    setColour (data, nodes, type, colours) {
+        _.each(data, (rows, outcome) => {                 // For each outcome
+            rows = _.filter(rows, {type})                 // Filter rows first so valSum is correctly calculated
+            let pool = _.filter(nodes, {outcome}),        // Filter nodes for for this outcome
+                norm = pool.length / _.sumBy(rows, "val") // Sum of vals can be greater than number of nodes, so normalise
+            pool = _.sortBy(pool, "y")                    // Sort by vertical position
+            _.each(colours, (cVal, subgroup) => {         // For each subgroup
+                let d = _.find(rows, {subgroup}),         // Find data row for subgroup
+                    size = _.round(d.val * norm),         // Normalise sample size
+                    sample = pool.splice(0, size)         // Grab nodes from the sample based on subgroup size
+                _.each(sample, e => e.cVal = cVal)        // Set colour for the sample based on subgroup
             })
-        return out
+        })
     }
 
     // Anchor to centre
