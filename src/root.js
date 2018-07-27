@@ -134,7 +134,7 @@ class Main {
     toClusters (nodes, onTick) {
         const clusters = _(nodes).groupBy("outcome").map((rows, outcome) => {
             let count = rows.length,
-                r =  Math.sqrt(count * 50 / Math.PI)
+                r =  Math.sqrt(count * 50 / Math.PI) + 12
             return {outcome, count, r}
         }).value()
         _(nodes).groupBy("outcome").each((rows, outcome) => {
@@ -153,10 +153,14 @@ class Main {
               height = $(canvas).height(),
               context = canvas.getContext("2d")
         context.clearRect(0, 0, width, height)
+        context.font="20px Stag Book" // Text
+        context.fillStyle = "#666"    // Text
+        context.strokeStyle = "#ccc"  // Line
         _.each(nodes, d => {
+            let labelPoint = addVector(d, -0.55 * Math.PI, d.r)
+            context.fillText(d.outcome, labelPoint.x, labelPoint.y)
             context.beginPath()
-            context.strokeStyle = "black"
-            context.arc(d.x, d.y, d.r, 0 * Math.PI, 2 * Math.PI)
+            context.arc(d.x, d.y, d.r, 0.4 * Math.PI, -0.58 * Math.PI)
             context.stroke()
         })
     }
@@ -182,6 +186,13 @@ class Main {
               })
               onTick()
           })
+    }
+}
+
+function addVector (start, offset, dist) {
+    return {
+        x: start.x + Math.cos(offset) * dist,
+        y: start.y + Math.sin(offset) * dist,
     }
 }
 
