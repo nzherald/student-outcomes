@@ -9,6 +9,7 @@
 /* Project-specific styles go here */
 #root {
     .beeswarm {
+        position: sticky;
         display: flex;
         flex-direction: column;
         box-sizing: border-box;
@@ -28,6 +29,14 @@
             flex-grow: 1;
             width: 100%;
             height: 400px;
+        }
+    }
+
+    .legend {
+        position: absolute;
+        z-index: 100;
+        .items {
+            flex-direction: column;
         }
     }
 }

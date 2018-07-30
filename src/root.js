@@ -8,6 +8,7 @@ import "./base.less"
 import "./root.less"
 
 import Beeswarm from "./lib/beeswarm-canvas.js"
+import Legend from "./lib/legend.js"
 import rawData from "./data/parsed.csv"
 
 const MAP = [{
@@ -112,6 +113,12 @@ class Main {
         _.each(nodes, d => d.cVal = d3.schemeCategory10[0]) // Base colour
         this.toCentre(nodes)
         B.setData(nodes)
+        this.legend = new Legend({
+            container : "div.legend",
+            type      : "colour",
+            ticks     : [],
+            scale     : d3.scaleOrdinal()
+        })
         $("#loading").fadeTo(600, 0.01, () => $("#loading").remove())
     }
 
@@ -159,6 +166,14 @@ class Main {
                 _.each(sample, e => e.cVal = v.colour)    // Set colour for the sample based on subgroup
             })
         })
+        this.setLegend(subgroups)
+    }
+
+    setLegend (subgroups) {
+        this.legend.scale.range(_.map(subgroups, "colour"))
+                         .domain(_.map(subgroups, "targName"))
+        this.legend.ticks = this.legend.scale.domain()
+        this.legend.update()
     }
 
     // Anchor to centre
