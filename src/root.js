@@ -168,6 +168,9 @@ class Main {
                     size = _.round(d.val * norm),         // Normalise sample size
                     sample = pool.splice(0, size)         // Grab nodes from the sample based on subgroup size
                 _.each(sample, e => e.cVal = v.colour)    // Set colour for the sample based on subgroup
+                if (pool.length === 1) {
+                    pool[0].cVal = v.colour               // Set colour for straggler
+                }
             })
         })
         this.setLegend(subgroups)
