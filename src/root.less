@@ -13,9 +13,10 @@
         display: flex;
         flex-direction: column;
         box-sizing: border-box;
-        width: 600px;
-        height: 800px;
+        width: 800px;
+        height: 600px;
         padding-top: 1em;
+        margin: auto;
 
         .title {
             text-align: center;
@@ -37,6 +38,25 @@
         z-index: 100;
         .items {
             flex-direction: column;
+        }
+    }
+
+    .text {
+        z-index: 100;
+        text-align: center;
+        width: 20em;
+        margin: auto;
+    }
+
+    .controllers {
+        & > div {
+            background-color: #eee;
+            width: 4em;
+            margin: 0.2em;
+            padding: 0 0.6em;
+            &:hover {
+                background-color: #ddd;
+            }
         }
     }
 }

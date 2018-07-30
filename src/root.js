@@ -17,24 +17,29 @@ const MAP = [{
     srcNames: ["All Leavers"]
 }, {
     type: "Decile",
-    targName: "Decile 1-3 (Most deprived)",
-    srcNames: ["Decile 1", "Decile 2", "Decile 3"],
-    colour: "#fc8d59"
+    targName: "Decile 8-10 (Least deprived)",
+    srcNames: ["Decile 8", "Decile 9", "Decile 10"],
+    colour: "#29A35A"
 }, {
     type: "Decile",
     targName: "Decile 4-7",
     srcNames: ["Decile 4", "Decile 5", "Decile 6", "Decile 7"],
-    colour: "#ffffbf"
+    colour: "#dfc27d"
 }, {
     type: "Decile",
-    targName: "Decile 8-10 (Least deprived)",
-    srcNames: ["Decile 8", "Decile 9", "Decile 10"],
-    colour: "#91bfdb"
+    targName: "Decile 1-3 (Most deprived)",
+    srcNames: ["Decile 1", "Decile 2", "Decile 3"],
+    colour: "#7B3294"
 }, {
     type: "Decile",
     targName: "Not Applicable",
     srcNames: ["Not Applicable"],
     colour: "#bfbfbf"
+}, {
+    type: "Ethnicity",
+    targName: "Pākehā",
+    srcNames: ["European\\Pākehā"],
+    colour: "#82B7D3"
 }, {
     type: "Ethnicity",
     targName: "Māori",
@@ -44,12 +49,7 @@ const MAP = [{
     type: "Ethnicity",
     targName: "Pacific",
     srcNames: ["Pacific"],
-    colour: "#BE8737"
-}, {
-    type: "Ethnicity",
-    targName: "European\\Pākehā",
-    srcNames: ["European\\Pākehā"],
-    colour: "#82B7D3"
+    colour: "#BEA037"
 }, {
     type: "Ethnicity",
     targName: "Asian",
@@ -59,9 +59,8 @@ const MAP = [{
     type: "Ethnicity",
     targName: "Other",
     srcNames: ["MELAA", "Other"],
-    colour: "#a6d854"
+    colour: "#bfbfbf"
 }]
-
 
 
 class Main {
@@ -93,32 +92,37 @@ class Main {
 
         // Set controllers
         $("#centre").on("click", () => {
+            $(".beeswarm .text").html("In 2015, 60,606 students left school. Each dot here represents 50 students.")
+            _.each(nodes, d => d.cVal = d3.schemeCategory10[0]) // Base colour
             this.toCentre(nodes)
+            this.legend.$.hide()
             B.redraw()
         })
         $("#cluster").on("click", () => {
+            $(".beeswarm .text").html("more words 1")
             this.toClusters(nodes, () => B.setNodes())
             B.redraw()
         })
         $("#ethnicity").on("click", () => {
+            $(".beeswarm .text").html("more words 2")
             this.setColour(data, nodes, "Ethnicity")
             B.onTick()
         })
         $("#deciles").on("click", () => {
+            $(".beeswarm .text").html("more words 3")
             this.setColour(data, nodes, "Decile")
             B.onTick()
         })
 
         // Initialise
-        _.each(nodes, d => d.cVal = d3.schemeCategory10[0]) // Base colour
-        this.toCentre(nodes)
-        B.setData(nodes)
         this.legend = new Legend({
             container : "div.legend",
             type      : "colour",
             ticks     : [],
             scale     : d3.scaleOrdinal()
         })
+        $("#centre").trigger("click")
+        B.setData(nodes)
         $("#loading").fadeTo(600, 0.01, () => $("#loading").remove())
     }
 
@@ -170,6 +174,7 @@ class Main {
     }
 
     setLegend (subgroups) {
+        this.legend.$.show()
         this.legend.scale.range(_.map(subgroups, "colour"))
                          .domain(_.map(subgroups, "targName"))
         this.legend.ticks = this.legend.scale.domain()
@@ -183,6 +188,7 @@ class Main {
             y: $("canvas").height() / 2
         }
         _.each(nodes, d => d.anchor = centre)
+        $("canvas.labels").hide()
     }
 
     // Anchor to clusters
@@ -192,6 +198,7 @@ class Main {
                 r =  Math.sqrt(count * 50 / Math.PI) + 12
             return {outcome, count, r}
         }).value()
+        $("canvas.labels").show()
         _(nodes).groupBy("outcome").each((rows, outcome) => {
             let anchor = _.find(clusters, {outcome})
             _.each(rows, d => d.anchor = anchor)
