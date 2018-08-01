@@ -7,7 +7,7 @@ import "./beeswarm.less"
 
 class Beeswarm {
     constructor (opt) {
-        this.$  = $(opt.container)
+        this.$ = $(opt.container)
         this.d3 = d3.select(opt.container)
         this.svg = {
             d3: this.d3.selectAppend("svg"),
@@ -15,9 +15,9 @@ class Beeswarm {
         }
         this.d3.classed("beeswarm", true)
 
-        this.scale  = opt.scale || {}
+        this.scale = opt.scale || {}
         this.domain = opt.domain || {}
-        this.axis   = opt.axis || {}
+        this.axis = opt.axis || {}
         this.format = opt.format || {}
 
         this.makeAxes()
@@ -30,7 +30,14 @@ class Beeswarm {
     }
 
     setData (data) {
+        const width = this.svg.$.width(),
+              height = this.svg.$.height()
+        _.each(data, d => {
+            d.x = d.tx = width * Math.random()
+            d.y = d.ty = height * Math.random()
+        })
         this.data = data
+        this.sim.nodes(data)
         this.setDomains()
         this.makeNodes(data)
         this.redraw()
@@ -41,6 +48,7 @@ class Beeswarm {
         this.setRanges()
         this.setAxes()
         this.setNodes()
+        this.drawNodes()
         this.sim.alpha(1)
         this.sim.restart()
     }
@@ -63,9 +71,9 @@ class Beeswarm {
             val = this.getVal(p, k)
         return (format) ? format(val) : val
     }
-    getX (d) { return this.scale.x(this.getXVal(d)) || 0 }
-    getY (d) { return this.scale.y(this.getYVal(d)) || 0 }
-    getR (d) { return this.scale.r(this.getRVal(d)) || 0 }
+    getX (d) { return this.scale.x(this.getXVal(d)) }
+    getY (d) { return this.scale.y(this.getYVal(d)) }
+    getR (d) { return this.scale.r(this.getRVal(d)) }
     getC (d) { return this.scale.c(this.getCVal(d)) }
 
     // Customise these
@@ -93,9 +101,9 @@ class Beeswarm {
 
     makeForce (opt) {
         this.sim = d3.forceSimulation().stop()
-        this.sim.force("charge",  d3.forceManyBody().strength(opt.chargeStr))
+        this.sim.force("charge", d3.forceManyBody().strength(opt.chargeStr))
                 .force("collide", d3.forceCollide().strength(opt.collideStr))
-                .force("anchor",  alpha => this.toAnchor(alpha, opt.clusterStr))
+                .force("anchor", alpha => this.toAnchor(alpha, opt.clusterStr))
                 .on("tick", () => this.onTick())
     }
 
@@ -104,13 +112,6 @@ class Beeswarm {
     //   Nodes   //
     //===========//
     makeNodes (data) {
-        const width = this.svg.$.width(),
-              height = this.svg.$.height()
-        this.sim.nodes(data)
-        _.each(data, d => {
-            d.x = width * Math.random()
-            d.y = height * Math.random()
-        })
         this.nodes = this.d3.select(".nodes")
                             .appendMany("g", data)
                             .append("circle")
@@ -118,13 +119,32 @@ class Beeswarm {
 
     setNodes () {
         _.each(this.data, d => {
-            d.r  = this.getR(d)
-            d.tx = this.getX(d)
-            d.ty = this.getY(d)
+            let r = this.getR(d),
+                x = this.getX(d),
+                y = this.getY(d)
+            // Invalid node, hide
+            if (isNaN(r) || isNaN(x) || isNaN(y)) {
+                d.r = 0
+            }
+            // Coming out of hiding
+            else if (d.r === 0) {
+                d.r = r
+                d.tx = d.x = x // Appear in targ position immediately
+                d.ty = d.y = y // Appear in targ position immediately
+            }
+            // Normal
+            else {
+                d.r = r
+                d.tx = x
+                d.ty = y
+            }
         })
-        this.nodes.at("r", d => (!d.tx || !d.ty) ? 0 : d.r) // Hide invalid nodes
-        this.nodes.st("fill", d => this.getC(d))
         this.sim.force("collide").radius(d => d.r + 0.5)
+    }
+
+    drawNodes () {
+        this.nodes.at("r", d => d.r)
+        this.nodes.st("fill", d => this.getC(d))
     }
 
 
@@ -163,7 +183,7 @@ class Beeswarm {
     }
 
     setRanges () {
-        const width  = this.svg.$.width(),
+        const width = this.svg.$.width(),
               height = this.svg.$.height()
         this.scale.x.range([0, width])
         this.scale.y.range([height, 0])

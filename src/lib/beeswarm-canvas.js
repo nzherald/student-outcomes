@@ -10,21 +10,23 @@ import "./beeswarm.less"
 class Beeswarm extends SVGBeeswarm {
     constructor (opt, b) {
         super(opt)
-        this.svg.$.remove()
         this.canvas = {
             d3: this.d3.select(".canvas-container")
                        .selectAppend("canvas.main"),
             $: this.$.find("canvas.main")
         }
+        this.svg.$.remove()
         this.svg = this.canvas
     }
 
+    // Disable SVG specific functions
+    makeNodes () {}
+    drawNodes () {}
+    setAxes () {}
 
-    //===========//
-    //   Force   //
-    //===========//
+    // Actual canvas redraw here
     onTick () {
-        const width  = this.canvas.$.width(),
+        const width = this.canvas.$.width(),
               height = this.canvas.$.height(),
               context = this.canvas.d3.node().getContext("2d")
         context.clearRect(0, 0, width, height)
@@ -37,46 +39,15 @@ class Beeswarm extends SVGBeeswarm {
         })
     }
 
-
-    //===========//
-    //   Nodes   //
-    //===========//
-    makeNodes (data) {
+    // Canvas needs width/height attributes to scale properly
+    setRanges () {
         const width = this.canvas.$.width(),
               height = this.canvas.$.height()
-        this.sim.nodes(data)
-        _.each(data, d => {
-            d.x = width * Math.random()
-            d.y = height * Math.random()
-        })
-    }
-    setNodes () {
-        _.each(this.data, d => {
-            d.r  = this.getR(d)
-            d.tx = this.getX(d)
-            d.ty = this.getY(d)
-        })
-        this.sim.force("collide").radius(d => d.r + 0.5)
-    }
-
-
-    //==========//
-    //   Axes   //
-    //==========//
-    setAxes () {
-        const width  = this.canvas.$.width(),
-              height = this.canvas.$.height()
-        // Canvas needs width/height attributes to scale properly
         this.d3.selectAll("canvas")
                .at("width", width)
                .at("height", height)
         this.scale.x.range([0, width])
         this.scale.y.range([height, 0])
-        // this.d3.select(".xAxis").call(this.axis.x)
-        // this.d3.select(".yAxis").call(this.axis.y)
-        // this.d3.selectAll(".yAxis .tick text").at("x", "0")
-        // this.d3.selectAll(".yAxis .tick line").at("x1", "0")
-        //                                       .at("x2", "100%")
     }
 }
 
