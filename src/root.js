@@ -126,34 +126,6 @@ class Main {
         $("#loading").fadeTo(600, 0.01, () => $("#loading").remove())
     }
 
-    cleanData (rawData) {
-        _.each(rawData, d => d.val = _.round(d.val / 50))
-        return _(rawData).filter({year: "2015"})
-                         .groupBy("outcome")
-                         .mapValues(group => {
-                             return _.map(MAP, o => {
-                                 return {
-                                     type: o.type,
-                                     subgroup: o.targName,
-                                     val: _(group).filter(d => o.srcNames.indexOf(d.subgroup) > -1)
-                                                  .sumBy("val")
-                                 }
-                             })
-                         }).value()
-    }
-
-    // Generate simulated students
-    makeNodes (data) {
-        let nodes = []
-        _(data).each((r, outcome) => {
-            let total = _.find(r, {type: "Total"})             // Each outcome should have one total
-            let cohort = Array(total.val)                      // Generate empty array for cohort
-            cohort = _.map(cohort, d => { return {outcome} })  // Fill with outcome placeholders
-            nodes = nodes.concat(cohort)                       // Push cohort
-        })
-        return nodes
-    }
-
     // Fancy algorithm for setting node colours
     setColour (data, nodes, type) {
         let subgroups = _.filter(MAP, {type})
@@ -184,6 +156,10 @@ class Main {
         this.legend.update()
     }
 
+
+    //================//
+    //   Clustering   //
+    //================//
     // Anchor to centre
     toCentre (nodes) {
         let centre = {
@@ -196,12 +172,9 @@ class Main {
 
     // Anchor to clusters
     toClusters (nodes, onTick) {
-        const clusters = _(nodes).groupBy("outcome").map((rows, outcome) => {
-            let count = rows.length,
-                r =  Math.sqrt(count * 50 / Math.PI) + 12
-            return {outcome, count, r}
-        }).value()
+        const clusters = this.makeClusters(nodes)
         $("canvas.labels").show()
+
         _(nodes).groupBy("outcome").each((rows, outcome) => {
             let anchor = _.find(clusters, {outcome})
             _.each(rows, d => d.anchor = anchor)
@@ -212,15 +185,30 @@ class Main {
         })
     }
 
+    makeClusters (nodes) {
+        return _(nodes).groupBy("outcome").map((rows, outcome) => {
+            let count = rows.length,
+                r =  Math.sqrt(count * 50 / Math.PI) + 12
+            return {outcome, count, r}
+        }).value()
+    }
+
+    setAnchors (nodes, clusters) {
+        _(nodes).groupBy("outcome").each((rows, outcome) => {
+            let anchor = _.find(clusters, {outcome})
+            _.each(rows, d => d.anchor = anchor)
+        })
+    }
+
     drawClusterLabels (nodes) {
         const canvas = d3.select("canvas.labels").node(),
               width  = $(canvas).width(),
               height = $(canvas).height(),
               context = canvas.getContext("2d")
         context.clearRect(0, 0, width, height)
-        context.font="20px Stag Book" // Text
-        context.fillStyle = "#666"    // Text
-        context.strokeStyle = "#ccc"  // Line
+        context.font = "20px Stag Book" // Text
+        context.fillStyle = "#666"      // Text
+        context.strokeStyle = "#ccc"    // Line
         _.each(nodes, d => {
             let labelPoint = addVector(d, -0.55 * Math.PI, d.r)
             context.fillText(d.outcome, labelPoint.x, labelPoint.y)
@@ -251,6 +239,38 @@ class Main {
               })
               onTick()
           })
+    }
+
+
+    //==========//
+    //   Data   //
+    //==========//
+    cleanData (rawData) {
+        _.each(rawData, d => d.val = _.round(d.val / 50))
+        return _(rawData).filter({year: "2015"})
+                         .groupBy("outcome")
+                         .mapValues(group => {
+                             return _.map(MAP, o => {
+                                 return {
+                                     type: o.type,
+                                     subgroup: o.targName,
+                                     val: _(group).filter(d => o.srcNames.indexOf(d.subgroup) > -1)
+                                                  .sumBy("val")
+                                 }
+                             })
+                         }).value()
+    }
+
+    // Generate simulated students
+    makeNodes (data) {
+        let nodes = []
+        _(data).each((r, outcome) => {
+            let total = _.find(r, {type: "Total"})             // Each outcome should have one total
+            let cohort = Array(total.val)                      // Generate empty array for cohort
+            cohort = _.map(cohort, d => { return {outcome} })  // Fill with outcome placeholders
+            nodes = nodes.concat(cohort)                       // Push cohort
+        })
+        return nodes
     }
 }
 
