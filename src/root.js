@@ -68,8 +68,8 @@ class Main {
         // Clean data
         console.log("Raw data:", rawData)
         const data = this.cleanData(rawData)
-        const nodes = this.makeNodes(data)
         console.log("Cleaned data:", data)
+        const nodes = this.makeNodes(data)
         console.log("Simulated nodes:", nodes)
 
         // Set up visualisation
@@ -96,6 +96,7 @@ class Main {
             _.each(nodes, d => d.cVal = d3.schemeCategory10[0]) // Base colour
             this.toCentre(nodes)
             this.legend.$.hide()
+            $("canvas.labels").hide()
             B.redraw()
         })
         $("#cluster").on("click", () => {
@@ -163,11 +164,10 @@ class Main {
     // Anchor to centre
     toCentre (nodes) {
         let centre = {
-            x: $("canvas").width() / 2,
-            y: $("canvas").height() / 2
+            x: $("canvas.main").width() / 2,
+            y: $("canvas.main").height() / 2
         }
         _.each(nodes, d => d.anchor = centre)
-        $("canvas.labels").hide()
     }
 
 
