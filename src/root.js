@@ -100,8 +100,8 @@ class Main {
         })
         $("#cluster").on("click", () => {
             $(".beeswarm .text").html("more words 1")
-            this.toClusters(nodes, () => B.setNodes())
-            B.redraw()
+            B.clusterBy("outcome")
+            $("canvas.labels").show()
         })
         $("#ethnicity").on("click", () => {
             $(".beeswarm .text").html("more words 2")
@@ -170,77 +170,6 @@ class Main {
         $("canvas.labels").hide()
     }
 
-    // Anchor to clusters
-    toClusters (nodes, onTick) {
-        const clusters = this.makeClusters(nodes)
-        $("canvas.labels").show()
-
-        _(nodes).groupBy("outcome").each((rows, outcome) => {
-            let anchor = _.find(clusters, {outcome})
-            _.each(rows, d => d.anchor = anchor)
-        })
-        this.forceClusters(clusters, () => {
-            onTick()
-            this.drawClusterLabels(clusters)
-        })
-    }
-
-    makeClusters (nodes) {
-        return _(nodes).groupBy("outcome").map((rows, outcome) => {
-            let count = rows.length,
-                r =  Math.sqrt(count * 50 / Math.PI) + 12
-            return {outcome, count, r}
-        }).value()
-    }
-
-    setAnchors (nodes, clusters) {
-        _(nodes).groupBy("outcome").each((rows, outcome) => {
-            let anchor = _.find(clusters, {outcome})
-            _.each(rows, d => d.anchor = anchor)
-        })
-    }
-
-    drawClusterLabels (nodes) {
-        const canvas = d3.select("canvas.labels").node(),
-              width  = $(canvas).width(),
-              height = $(canvas).height(),
-              context = canvas.getContext("2d")
-        context.clearRect(0, 0, width, height)
-        context.font = "20px Stag Book" // Text
-        context.fillStyle = "#666"      // Text
-        context.strokeStyle = "#ccc"    // Line
-        _.each(nodes, d => {
-            let labelPoint = addVector(d, -0.55 * Math.PI, d.r)
-            context.fillText(d.outcome, labelPoint.x, labelPoint.y)
-            context.beginPath()
-            context.arc(d.x, d.y, d.r, 0.4 * Math.PI, -0.58 * Math.PI)
-            context.stroke()
-        })
-    }
-
-    // Place nodes using d3-force
-    forceClusters (nodes, onTick) {
-        let opt = {
-            chargeStr: -80,
-            collideStr: 0.8
-        }
-        var width = $("canvas").width(),
-            height = $("canvas").height()
-        d3.forceSimulation()
-          .force("center",  d3.forceCenter().x(width / 2).y(height / 2))
-          .force("charge",  d3.forceManyBody().strength(opt.chargeStr))
-          .force("collide", d3.forceCollide().strength(opt.collideStr).radius(d => d.r * 1.2))
-          .nodes(nodes)
-          .on("tick", () => {
-              _.each(nodes, d => {
-                  let padding = d.r + 40
-                  d.x = _.clamp(d.x, padding, width - padding)
-                  d.y = _.clamp(d.y, padding, height - padding)
-              })
-              onTick()
-          })
-    }
-
 
     //==========//
     //   Data   //
@@ -271,13 +200,6 @@ class Main {
             nodes = nodes.concat(cohort)                       // Push cohort
         })
         return nodes
-    }
-}
-
-function addVector (start, offset, dist) {
-    return {
-        x: start.x + Math.cos(offset) * dist,
-        y: start.y + Math.sin(offset) * dist,
     }
 }
 
