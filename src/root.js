@@ -74,56 +74,13 @@ class Main {
 
         // Set up visualisation
         $("#root").addClass("nzherald").append(HTML)
-        const B = new Beeswarm({
-            container: ".beeswarm",
-            scale: {
-                x: d3.scaleLinear(), // Placeholder scale
-                y: d3.scaleLinear()  // Placeholder scale
-            },
-            chargeStr: -0.7,
-            collideStr: 0.4,
-            clusterStr: 0.08
-        })
-        B.sim.force("charge").distanceMax(120)
-        B.getX = function (d) { return d.anchor.x }
-        B.getY = function (d) { return d.anchor.y }
-        B.getR = function (d) { return 3 }
-        B.getC = function (d) { return d.cVal }
-
-        // Set controllers
-        $("#centre").on("click", () => {
-            $(".beeswarm .text").html("In 2015, 60,606 students left school. Each dot here represents 50 students.")
-            _.each(nodes, d => d.cVal = d3.schemeCategory10[0]) // Base colour
-            this.toCentre(nodes)
-            this.legend.$.hide()
-            $("canvas.labels").hide()
-            B.redraw()
-        })
-        $("#cluster").on("click", () => {
-            $(".beeswarm .text").html("more words 1")
-            B.clusterBy("outcome")
-            $("canvas.labels").show()
-        })
-        $("#ethnicity").on("click", () => {
-            $(".beeswarm .text").html("more words 2")
-            this.setColour(data, nodes, "Ethnicity")
-            B.onTick()
-        })
-        $("#deciles").on("click", () => {
-            $(".beeswarm .text").html("more words 3")
-            this.setColour(data, nodes, "Decile")
-            B.onTick()
-        })
+        this.swarm = this.makeSwarm()
+        this.legend = this.makeLegend()
 
         // Initialise
-        this.legend = new Legend({
-            container : "div.legend",
-            type      : "colour",
-            ticks     : [],
-            scale     : d3.scaleOrdinal()
-        })
+        this.setScript(nodes)
         $("#centre").trigger("click")
-        B.setData(nodes)
+        this.swarm.setData(nodes)
         $("#loading").fadeTo(600, 0.01, () => $("#loading").remove())
     }
 
@@ -147,27 +104,29 @@ class Main {
             })
         })
         this.setLegend(subgroups)
+        this.swarm.onTick()
     }
 
-    setLegend (subgroups) {
-        this.legend.$.show()
-        this.legend.scale.range(_.map(subgroups, "colour"))
-                         .domain(_.map(subgroups, "targName"))
-        this.legend.ticks = this.legend.scale.domain()
-        this.legend.update()
-    }
-
-
-    //================//
-    //   Clustering   //
-    //================//
-    // Anchor to centre
-    toCentre (nodes) {
-        let centre = {
-            x: $("canvas.main").width() / 2,
-            y: $("canvas.main").height() / 2
-        }
-        _.each(nodes, d => d.anchor = centre)
+    setScript (nodes) {
+        $("#centre").on("click", () => {
+            $(".beeswarm .text").html("In 2015, 60,606 students left school. Each dot here represents 50 students.")
+            $("canvas.labels").hide()
+            this.legend.$.hide()
+            this.toCentre(nodes)
+        })
+        $("#cluster").on("click", () => {
+            $(".beeswarm .text").html("more words 1")
+            $("canvas.labels").show()
+            this.swarm.clusterBy("outcome")
+        })
+        $("#ethnicity").on("click", () => {
+            $(".beeswarm .text").html("more words 2")
+            this.setColour(data, nodes, "Ethnicity")
+        })
+        $("#deciles").on("click", () => {
+            $(".beeswarm .text").html("more words 3")
+            this.setColour(data, nodes, "Decile")
+        })
     }
 
 
@@ -200,6 +159,69 @@ class Main {
             nodes = nodes.concat(cohort)                       // Push cohort
         })
         return nodes
+    }
+
+    //============//
+    //   Common   //
+    //============//
+    makeSwarm () {
+        const B = new Beeswarm({
+            container: ".beeswarm",
+            scale: {
+                x: d3.scaleLinear(), // Placeholder scale
+                y: d3.scaleLinear()  // Placeholder scale
+            },
+            chargeStr: -0.7,
+            collideStr: 0.4,
+            clusterStr: 0.08
+        })
+        B.sim.force("charge").distanceMax(120)
+        B.getX = function (d) { return d.anchor.x }
+        B.getY = function (d) { return d.anchor.y }
+        B.getR = function (d) { return 3 }
+        B.getC = function (d) { return d.cVal }
+        return B
+    }
+
+    makeLegend () {
+        return new Legend({
+            container : "div.legend",
+            type      : "colour",
+            ticks     : [],
+            scale     : d3.scaleOrdinal()
+        })
+    }
+
+    setLegend (subgroups) {
+        this.legend.$.show()
+        this.legend.scale.range(_.map(subgroups, "colour"))
+        .domain(_.map(subgroups, "targName"))
+        this.legend.ticks = this.legend.scale.domain()
+        this.legend.update()
+    }
+
+    setColour (nodes, key, categories) {
+        _.each(categories, c => {
+            _.each(c.vals, v => {
+                _(nodes).filter(d => d[key] === v)
+                        .each(d => d.cVal = c.colour)
+            })
+        })
+        this.setLegend(categories)
+        this.swarm.onTick()
+    }
+
+    // Anchor to centre
+    toCentre (nodes) {
+        let centre = {
+            x: $("canvas.main").width() / 2,
+            y: $("canvas.main").height() / 2
+        }
+        _.each(nodes, d => {
+            d.anchor = centre
+            d.cVal = d3.schemeCategory10[0] // Base colour
+        })
+        this.swarm.redraw()
     }
 }
 
