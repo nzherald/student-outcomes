@@ -9,53 +9,44 @@
 /* Project-specific styles go here */
 #root {
     .beeswarm {
-        position: sticky;
         display: flex;
         flex-direction: column;
         box-sizing: border-box;
-        width: 800px;
-        height: 600px;
         padding-top: 1em;
         margin: auto;
 
-        .title {
-            text-align: center;
-            font-size: 0.8em;
-            margin-bottom: 0.6em;
-            .top {
-                margin-bottom: 0;
-            }
-        }
         .canvas-container {
-            flex-grow: 1;
-            width: 100%;
+            width: 800px;
             height: 400px;
         }
     }
 
     .legend {
-        position: absolute;
-        z-index: 100;
-        .items {
-            flex-direction: column;
-        }
+        height: 0em;
+        margin: auto;
+        padding: 0;
+        border: none;
+        transform: translateY(-2em);
+        background-color: unset;
     }
 
     .text {
-        z-index: 100;
-        text-align: center;
-        width: 20em;
+        width: 480px;
+        max-width: 100%;
+        min-height: 4em;
         margin: auto;
+        text-align: center;
+        .hint {
+            font-size: 0.8em;
+            font-weight: bold;
+        }
     }
 
-    .controllers {
-        & > div {
-            background-color: #eee;
-            width: 4em;
-            margin: 0.2em;
-            padding: 0 0.6em;
-            &:hover {
-                background-color: #ddd;
+    @media (max-width: 800px) {
+        .beeswarm {
+            .canvas-container {
+                width: 100%;
+                height: 440px;
             }
         }
     }
