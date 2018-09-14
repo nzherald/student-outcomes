@@ -126,7 +126,7 @@ class Main {
         B.sim.force("charge").distanceMax(120)
         B.getX = function (d) { return d.anchor.x }
         B.getY = function (d) { return d.anchor.y }
-        B.getR = function (d) { return 3 }
+        B.getR = function (d) { return 2.5 }
         B.getC = function (d) { return d.cVal }
         return B
     }
