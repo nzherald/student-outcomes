@@ -88,9 +88,9 @@ class Beeswarm extends SVGBeeswarm {
 
     drawClusterLabels (clusters, key, opt) {
         opt = _.extend({
-            font: "20px Stag Book", // Text
-            fillStyle: "#666",      // Text
-            strokeStyle: "#ccc"     // Line
+            font: "1em Stag Book", // Text
+            fillStyle: "#666",     // Text
+            strokeStyle: "#ccc"    // Line
         }, opt)
 
         const canvas = this.d3.select("canvas.labels").node(),
