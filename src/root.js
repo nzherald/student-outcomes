@@ -9,6 +9,7 @@ import "./root.less"
 
 import Beeswarm from "./lib/beeswarm-canvas.js"
 import Legend from "./lib/legend.js"
+import ScriptBox from "./lib/scriptbox.js"
 import rawData from "./data/parsed.csv"
 
 
@@ -27,32 +28,48 @@ class Main {
         this.legend = this.makeLegend()
 
         // Initialise
-        this.setScript(nodes)
+        this.script = this.setScript(nodes)
+        this.script.captureKeystrokes()
         this.toCentre(nodes)
         this.swarm.setData(nodes)
+        this.script.setPos(0)
         $("#intro").trigger("click")
         $("#loading").fadeTo(600, 0.01, () => $("#loading").remove())
     }
 
     setScript (nodes) {
-        $("#intro").on("click", () => {
-            $(".beeswarm .text").html("In 2015, 60,606 students left school. Each dot represents 50 students, and where they went after school.")
-            this.swarm.clusterBy("outcome")
-            _.each(nodes, d => d.cVal = d3.schemeCategory10[0]) // Base colour
-            this.legend.$.hide()
-        })
-        $("#decilehigh").on("click", () => {
-            $(".beeswarm .text").html("For students from the most well-off schools, nearly 50% entered university, while 32% of")
-            this.setColour(nodes, "Decile", [{
-                label: "Decile 8-10 (Least deprived)",
-                vals: ["Decile 8", "Decile 9", "Decile 10"],
-                colour: "#29A35A"
-            }, {
-                label: "Others",
-                vals: ["Not Applicable", "Decile 1", "Decile 2", "Decile 3", "Decile 4", "Decile 5", "Decile 6", "Decile 7"],
-                colour: "#bfbfbf"
-            }])
-        })
+        return new ScriptBox({container: "#scriptbox"}, [{
+            name: "intro",
+            html: "<p>Each dot represents 50 students who left school in 2015.</p>" +
+                  "<p><b>Click next to see more.</b></p>",
+            action: () => {
+                this.swarm.clusterBy("outcome", {
+                    edgePadding: 20
+                })
+                _.each(nodes, d => d.cVal = d3.schemeCategory10[0]) // Base colour
+                this.legend.$.hide()
+            }
+        },{
+            name: "decilehigh",
+            html: "<p>For students from the <b>least deprived 30%</b> of schools, nearly 50% entered university.</p>",
+            action: () => {
+                this.setColour(nodes, "Decile", [{
+                    label: "Decile 8-10 (Least deprived)",
+                    vals: ["Decile 8", "Decile 9", "Decile 10"],
+                    colour: "#29A35A"
+                }])
+            }
+        },{
+            name: "decilelow",
+            html: "<p>For students from the <b>most deprived 30%</b> of schools, however, only 17% entered university.</p>",
+            action: () => {
+                this.setColour(nodes, "Decile", [{
+                    label: "Decile 1-3 (Most deprived)",
+                    vals: ["Decile 1", "Decile 2", "Decile 3"],
+                    colour: "#9970AB"
+                }])
+            }
+        }])
     }
 
 
@@ -132,6 +149,7 @@ class Main {
     }
 
     setColour (nodes, key, categories) {
+        _.each(nodes, d => d.cVal = "#cfcfcf") // Default colour
         _.each(categories, c => {
             _.each(c.vals, v => {
                 _(nodes).filter(d => d[key] === v)
