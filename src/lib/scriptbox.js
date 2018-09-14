@@ -51,8 +51,8 @@ class ScriptBox {
         // Make elements
         const ct = this.d3.selectAppend("div.controller")
         this.status = ct.selectAppend("div.status")
-        this.prev = ct.selectAppend("div.button.prev")
-        this.next = ct.selectAppend("div.button.next")
+        this.prev = ct.selectAppend("div.control.prev")
+        this.next = ct.selectAppend("div.control.next")
         this.pips = ct.selectAppend("div.pips")
 
         // Set actions
