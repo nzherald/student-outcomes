@@ -3,16 +3,16 @@
   "name": "student-outcomes",
   "author": "",
   "license": "ISC",
-  "description": "Swarm filter visualisation to accompany Kirsty's stories - destination/outcome for all school-leavers",
+  "description": "Standalone swarm filter visualisation",
   "keywords": [],
   "version": "0.0.1",
-  "homepage": "https://insights.nzherald.co.nz/apps/2018/student-outcomes/",
+  "homepage": "https://insights.nzherald.co.nz/apps/2018/student-outcomes-interactive/",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/nzherald/student-outcomes.git"
+    "url": "git+https://github.com/nzherald/student-outcomes-interactive.git"
   },
   "bugs": {
-    "url": "https://github.com/nzherald/student-outcomes/issues"
+    "url": "https://github.com/nzherald/student-outcomes-interactive/issues"
   },
   "scripts": {
     "start": "webpack-dev-server --config webpack.dev.js --open",
